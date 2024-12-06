@@ -9,12 +9,23 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="info">
+        <div id="info" class="info-panel">
             <h1>Find: <span id="target-location">Loading...</span></h1>
             <p>Score: <span id="score">0</span></p>
             <p>Time Left: <span id="time-left">60</span> seconds</p>
         </div>
-        <div id="map"></div>
+        <div id="map-container">
+            <div id="map"></div>
+            <div id="guesses-container">
+                <h2>Your Guesses</h2>
+                <ul id="guesses-list"></ul>
+            </div>
+        </div>
+        <div id="game-over" style="display: none;">
+            <h2>Game Over!</h2>
+            <p>Your final score: <span id="final-score">0</span></p>
+            <button id="restart-button" style="display: none;">Restart Game</button>
+        </div>
     </div>
     <script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
     <script src="app.js"></script>

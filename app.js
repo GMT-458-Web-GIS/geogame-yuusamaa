@@ -7,20 +7,24 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 
 // Global variables
 let targetLocations = [
-    { name: 'Paris, France', coords: [48.8566, 2.3522] },
-    { name: 'New York, USA', coords: [40.7128, -74.006] },
-    { name: 'Tokyo, Japan', coords: [35.6895, 139.6917] },
-    { name: 'Sydney, Australia', coords: [-33.8688, 151.2093] },
-    { name: 'Cairo, Egypt', coords: [30.0444, 31.2357] },
+    { name: 'France', coords: [46.2276, 2.2137] },
+    { name: 'United States', coords: [37.0902, -95.7129] },
+    { name: 'Japan', coords: [36.2048, 138.2529] },
+    { name: 'Australia', coords: [-25.2744, 133.7751] },
+    { name: 'Egypt', coords: [26.8206, 30.8025] },
 ];
 let currentTarget = null;
-let score = 0;
+let scoreTracker = createScoreTracker();
 let timeLeft = 60;
 
-// Update UI
+// DOM Elements
 const targetLocationElement = document.getElementById('target-location');
 const scoreElement = document.getElementById('score');
 const timeLeftElement = document.getElementById('time-left');
+const gameOverElement = document.getElementById('game-over');
+const finalScoreElement = document.getElementById('final-score');
+const restartButton = document.getElementById('restart-button');
+const guessesList = document.getElementById('guesses-list');
 
 // Pick a random target location
 function pickTarget() {
@@ -35,8 +39,7 @@ function startTimer() {
         timeLeftElement.textContent = timeLeft;
         if (timeLeft <= 0) {
             clearInterval(timer);
-            alert(`Time's up! Final Score: ${score}`);
-            resetGame();
+            endGame();
         }
     }, 1000);
 }
@@ -56,27 +59,84 @@ function calculateDistance(coords1, coords2) {
     return R * c; // Distance in km
 }
 
+// Calculate score based on distance
+function calculateScore(distance) {
+    if (distance <= 100) {
+        return 500;
+    } else if (distance > 100 && distance <= 250) {
+        return 250;
+    } else if (distance > 250 && distance <= 500) {
+        return 100;
+    } else {
+        return -100;
+    }
+}
+
 // Handle map click
 map.on('click', function (e) {
-    const distance = calculateDistance([e.latlng.lat, e.latlng.lng], currentTarget.coords);
-    if (distance < 500) {
-        score += Math.max(0, 1000 - Math.floor(distance)); // Closer = more points
-    } else {
-        score -= 100; // Penalty for being far
-    }
-    scoreElement.textContent = score;
+    const clickedCoords = [e.latlng.lat, e.latlng.lng];
+    const targetCoord = currentTarget.coords;
+    const distance = calculateDistance(clickedCoords, targetCoord);
+
+    // Calculate score for this guess
+    const guessScore = calculateScore(distance);
+    scoreTracker.increment(guessScore);
+    scoreElement.textContent = scoreTracker.getScore();
+
+    // Display appropriate popup message
+    let popupMessage = `Distance: ${distance.toFixed(2)} km<br>Score: ${guessScore > 0 ? '+' : ''}${guessScore} points`;
+
+    L.popup()
+        .setLatLng(e.latlng)
+        .setContent(`<b>${popupMessage}</b>`)
+        .openOn(map);
+
+    // Add guess to the list
+    const guessItem = document.createElement('li');
+    guessItem.textContent = `Lat: ${e.latlng.lat.toFixed(4)}, Lng: ${e.latlng.lng.toFixed(4)}, Distance: ${distance.toFixed(2)} km, Score: ${guessScore}`;
+    guessesList.appendChild(guessItem);
+
     pickTarget(); // Pick a new target
 });
 
 // Reset game
 function resetGame() {
-    score = 0;
+    scoreTracker.reset();
     timeLeft = 60;
-    scoreElement.textContent = score;
+    scoreElement.textContent = scoreTracker.getScore();
     timeLeftElement.textContent = timeLeft;
+    gameOverElement.style.display = 'none';
+    restartButton.style.display = 'none';
+    guessesList.innerHTML = ''; // Clear the list
     pickTarget();
     startTimer();
 }
+
+// End game
+function endGame() {
+    gameOverElement.style.display = 'block';
+    finalScoreElement.textContent = scoreTracker.getScore();
+    restartButton.style.display = 'inline-block';
+}
+
+// Create score tracker
+function createScoreTracker() {
+    let score = 0;
+    return {
+        increment: function (points) {
+            score += points;
+        },
+        reset: function () {
+            score = 0;
+        },
+        getScore: function () {
+            return score;
+        },
+    };
+}
+
+// Restart button event
+restartButton.addEventListener('click', resetGame);
 
 // Start the game
 resetGame();
