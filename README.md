@@ -74,4 +74,4 @@ Follow these steps to run the project on your local machine:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/<username>/<repository-name>.git
+   git clone https://github.com/GMT-458-Web-GIS/personal-web-page-yuusamaa.git
